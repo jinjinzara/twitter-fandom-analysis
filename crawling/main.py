@@ -23,9 +23,6 @@ search_keyword = "nct"
 
 account = "@ITZYofficial"
 search_keyword = "itzy"
-
-accounts = ["@NCTsmtown", "@ITZYofficial"]
-search_keywords = ["nct", "itzy"]
     
 #collecting filtered stream data (test)
 def collecting_tweets(account, search_keyword):
@@ -47,13 +44,18 @@ def collecting_tweets(account, search_keyword):
                         length += str(tweets_f).count('\n') + 1
             except:
                 continue
-                    
-for i in range(len(accounts)):
-    account = accounts[i]
-    search_keyword = search_keywords[i]
-    collecting_tweets(account, search_keyword)
-              
 
+inputs = list()
+inputs.append(['@ENHYPEN_members', 'enhypen'])
+inputs.append(['@NCTsmtown', 'nct'])
+inputs.append(['@ITZYofficial', 'itzy'])
+
+def collecting_multimode(inputs):
+    for ipt in inputs:
+        account = ipt[0]
+        search_keyword = ipt[1]
+        collecting_tweets(account, search_keyword)
+              
 #collecting timeline (test)
 statuses = twitter_api.GetUserTimeline(screen_name=account, count=10, include_rts=True, exclude_replies=False)
 
