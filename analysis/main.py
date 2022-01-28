@@ -8,7 +8,6 @@ Created on Fri Jan 14 17:06:04 2022
 import json
 import os
 import pandas as pd
-import nltk
 import random
 from nltk.tokenize import RegexpTokenizer
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
@@ -23,6 +22,7 @@ nct_dir = 'data/@NCTsmtown'
 itzy_dir= 'data/@ITZYofficial'
 enhypen_dir = 'data/@ENHYPEN_members'
 
+#json to dataframe
 def to_df(filedir):
     df = pd.DataFrame(columns=['id', 'following_account', 'text'])
     for filename in os.listdir(filedir):
@@ -32,21 +32,23 @@ def to_df(filedir):
         for tweet in tweets:
             try:
                 t_text += tweet['text'] + ' '
-            except KeyError:
+            except KeyError: #raise keyerror when there is no text attribute in tweet data
                 print('No text in this tweet.')
         new_data = {'id' : t_id, 'following_account' : filedir[5:],'text' : t_text}
         df = df.append(new_data, ignore_index=True)
     df['tokens'] = df['text'].apply(nltk_tokenizer)
     return df
 
+#tokenize & preprocessing
 def nltk_tokenizer(_wd):
     custom_stopwords = open('analysis/stopwords.txt', 'r').read().split('\n')
-    tokens = RegexpTokenizer('[\w]+').tokenize(_wd.lower())
+    tokens = RegexpTokenizer('[A-Za-z]+').tokenize(_wd.lower()) #english only
     for token in tokens:
         if token in stopwords.words('english') or token in custom_stopwords or len(token) < 2:
             tokens.remove(token)
     return tokens
 
+#make TaggedDocument for Doc2vec
 def tagging(df):
     doc_df = df[['id', 'tokens']].values.tolist()
     tagged_data = [TaggedDocument(words=_d, tags=[uid]) for uid, _d in doc_df]
@@ -58,24 +60,32 @@ merged_df = pd.concat([nct_df, itzy_df, enhypen_df])
 nct_tagged, itzy_tagged, enhypen_tagged = tagging(nct_df), tagging(itzy_df), tagging(enhypen_df)
 merge_tagged = nct_tagged + itzy_tagged + enhypen_tagged
 
-model = Doc2Vec(alpha=0.025, min_alpha=0.0001, seed=100)
-model.build_vocab(merge_tagged)
+#doc2vec training
+def training(merge_tagged):
+    model = Doc2Vec(alpha=0.025, min_alpha=0.0001, seed=100)
+    model.build_vocab(merge_tagged)
 
-max_epoch = 10
-for epoch in range(max_epoch):
-    print('iteration {0}'.format(epoch))
-    model.train(merge_tagged, total_examples=model.corpus_count, epochs=model.epochs)
-    model.alpha -= 0.002
-    model.min_alpha = model.alpha
+    max_epoch = 10
+    for epoch in range(max_epoch):
+        print('iteration {0}'.format(epoch))
+        model.train(merge_tagged, total_examples=model.corpus_count, epochs=model.epochs)
+        model.alpha -= 0.002
+        model.min_alpha = model.alpha
+    return model
 
-nct_tagged_sample = [tagged.words for tagged in random.sample(nct_tagged, 100)]
-itzy_tagged_sample = [tagged.words for tagged in random.sample(itzy_tagged, 100)]
-enhypen_tagged_sample = [tagged.words for tagged in random.sample(enhypen_tagged, 100)]
+model = training(merge_tagged)
 
+#sampling for network
+nct_tagged_sample = [tagged.words for tagged in random.sample(nct_tagged, 100, seed=1)]
+itzy_tagged_sample = [tagged.words for tagged in random.sample(itzy_tagged, 100, seed=1)]
+enhypen_tagged_sample = [tagged.words for tagged in random.sample(enhypen_tagged, 100, seed=1)]
+
+#infer embedding vectors of sample data
 merge_tagged_sample = nct_tagged_sample + itzy_tagged_sample + enhypen_tagged_sample
 embedding_vectors = [model.infer_vector(text) for text in merge_tagged_sample]
 similarity_matrix = pd.DataFrame(cosine_similarity(embedding_vectors, embedding_vectors))
 
+#print 2-dim t-sne plot for whole data
 embedding_vectors = [model.infer_vector(tagged.words) for tagged in merge_tagged]
 two_dim_vectors = TSNE(n_components=2).fit_transform(embedding_vectors)
 fig, ax = plt.subplots(figsize=(16,20))
