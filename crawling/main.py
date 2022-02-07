@@ -69,4 +69,4 @@ for follower in followers:
         for status_f in statuses_of_follower:
             print(status_f.text)
     except:
-        continue                
+        continue           
