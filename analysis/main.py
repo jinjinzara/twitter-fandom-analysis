@@ -67,13 +67,14 @@ def training(merge_tagged):
 
     max_epoch = 10
     for epoch in range(max_epoch):
-        print('iteration {0}'.format(epoch))
+        print('epoch {0}'.format(epoch))
         model.train(merge_tagged, total_examples=model.corpus_count, epochs=model.epochs)
         model.alpha -= 0.002
         model.min_alpha = model.alpha
     return model
 
 model = training(merge_tagged)
+model.save('analysis/doc2vec_v1.1.3.model')
 
 #sampling for network
 nct_tagged_sample = [tagged.words for tagged in random.sample(nct_tagged, 100, seed=1)]
@@ -90,3 +91,12 @@ embedding_vectors = [model.infer_vector(tagged.words) for tagged in merge_tagged
 two_dim_vectors = TSNE(n_components=2).fit_transform(embedding_vectors)
 fig, ax = plt.subplots(figsize=(16,20))
 sns.scatterplot(two_dim_vectors[:,0], two_dim_vectors[:,1], hue=merged_df['following_account'].values)
+
+#test for evaluation
+txt_dir = 'data/@TXT_members'
+twice_dir = 'data/@JYPETWICE'
+
+txt_df, twice_df = to_df(txt_dir), to_df(twice_dir)
+merged_df = pd.concat([merged_df, txt_df, twice_df])
+txt_tagged, twice_tagged = tagging(txt_df), tagging(twice_df)
+merge_tagged = merge_tagged + txt_tagged + twice_tagged
