@@ -9,32 +9,20 @@ import config
 import twitter
 import json
 import time
-
-twitter_api = twitter.Api(consumer_key=config.twitter_consumer_key,
-                          consumer_secret=config.twitter_consumer_secret, 
-                          access_token_key=config.twitter_access_token, 
-                          access_token_secret=config.twitter_access_secret)
-
-account = "@ENHYPEN_members"
-search_keyword = "enhypen"
-
-account = "@NCTsmtown"
-search_keyword = "nct"
-
-account = "@ITZYofficial"
-search_keyword = "itzy"
+import pandas as pd
     
-#collecting filtered stream data (test)
+#collecting filtered stream data
 def collecting_tweets(account, search_keyword):
+    start = time.time()
     followers = twitter_api.GetFollowerIDs(screen_name=account, cursor=-1, count=1000, total_count=1000, stringify_ids=True)
 
-    for follower in followers:
-        output_file_name = "data/" + account + "/id" + follower + ".txt"
-        with open(output_file_name, "w", encoding="utf-8") as output_file:
+    output_file_name = "data/" + account + ".txt"
+    with open(output_file_name, "w", encoding="utf-8") as output_file:
+        length = 1
+        p_time = time.time() - start
+        while length < 100 and p_time < 43200: #if data is not collected until 12 hrs, stop collecting
             try:
-                time.sleep(1)
-                stream_of_followers = twitter_api.GetStreamFilter(follow=[follower], track=[search_keyword], languages=["en"])
-                length = 1
+                stream_of_followers = twitter_api.GetStreamFilter(follow=followers, track=[search_keyword], languages=["en"])
                 while length < 100:
                     for tweets_f in stream_of_followers:
                         if length > 100:
@@ -43,12 +31,7 @@ def collecting_tweets(account, search_keyword):
                         print(tweet_f, file=output_file, flush=True)
                         length += str(tweets_f).count('\n') + 1
             except:
-                continue
-
-inputs = list()
-inputs.append(['@ENHYPEN_members', 'enhypen'])
-inputs.append(['@NCTsmtown', 'nct'])
-inputs.append(['@ITZYofficial', 'itzy'])
+                time.sleep(5) #Rate limit exceeded. Wait 5 seconds.
 
 def collecting_multimode(inputs):
     for ipt in inputs:
@@ -57,16 +40,26 @@ def collecting_multimode(inputs):
         collecting_tweets(account, search_keyword)
               
 #collecting timeline (test)
-statuses = twitter_api.GetUserTimeline(screen_name=account, count=10, include_rts=True, exclude_replies=False)
+def collecting_timeline(account):
+    statuses = twitter_api.GetUserTimeline(screen_name=account, count=10, include_rts=True, exclude_replies=False)
 
-for status in statuses:
-    print(status.text)
-    
-followers = twitter_api.GetFollowerIDs(screen_name=account, cursor=-1, count=10, total_count=10)
-for follower in followers:
-    try:
-        statuses_of_follower = twitter_api.GetUserTimeline(user_id=follower, count=10, include_rts=False, exclude_replies=False)
-        for status_f in statuses_of_follower:
-            print(status_f.text)
-    except:
-        continue           
+    for status in statuses:
+        print(status.text)
+        
+    followers = twitter_api.GetFollowerIDs(screen_name=account, cursor=-1, count=10, total_count=10)
+    for follower in followers:
+        try:
+            statuses_of_follower = twitter_api.GetUserTimeline(user_id=follower, count=10, include_rts=False, exclude_replies=False)
+            for status_f in statuses_of_follower:
+                print(status_f.text)
+        except:
+            continue           
+
+if __name__ == '__main__':
+    twitter_api = twitter.Api(consumer_key=config.twitter_consumer_key,
+                              consumer_secret=config.twitter_consumer_secret, 
+                              access_token_key=config.twitter_access_token, 
+                              access_token_secret=config.twitter_access_secret)
+
+    most_followed = pd.read_csv('data/most_followed.csv')
+    most_followed.apply(lambda x: collecting_tweets(x['account'], x['name']), axis=1)
