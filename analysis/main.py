@@ -76,10 +76,13 @@ def training(merge_tagged):
 model = training(merge_tagged)
 model.save('analysis/doc2vec_v1.1.3.model')
 
+model = Doc2Vec.load('analysis/doc2vec_v1.1.3.model')
+
 #sampling for network
-nct_tagged_sample = [tagged.words for tagged in random.sample(nct_tagged, 100, seed=1)]
-itzy_tagged_sample = [tagged.words for tagged in random.sample(itzy_tagged, 100, seed=1)]
-enhypen_tagged_sample = [tagged.words for tagged in random.sample(enhypen_tagged, 100, seed=1)]
+random.seed(10)
+nct_tagged_sample = [tagged.words for tagged in random.sample(nct_tagged, 50)]
+itzy_tagged_sample = [tagged.words for tagged in random.sample(itzy_tagged, 50)]
+enhypen_tagged_sample = [tagged.words for tagged in random.sample(enhypen_tagged, 50)]
 
 #infer embedding vectors of sample data
 merge_tagged_sample = nct_tagged_sample + itzy_tagged_sample + enhypen_tagged_sample
@@ -87,8 +90,8 @@ embedding_vectors = [model.infer_vector(text) for text in merge_tagged_sample]
 similarity_matrix = pd.DataFrame(cosine_similarity(embedding_vectors, embedding_vectors))
 
 #print 2-dim t-sne plot for whole data
-embedding_vectors = [model.infer_vector(tagged.words) for tagged in merge_tagged]
-two_dim_vectors = TSNE(n_components=2).fit_transform(embedding_vectors)
+embedding_vectors = [model.infer_vector(tagged) for tagged in merge_tagged]
+two_dim_vectors = TSNE(n_components=2, random_state=100).fit_transform(embedding_vectors)
 fig, ax = plt.subplots(figsize=(16,20))
 sns.scatterplot(two_dim_vectors[:,0], two_dim_vectors[:,1], hue=merged_df['following_account'].values)
 
@@ -100,3 +103,8 @@ txt_df, twice_df = to_df(txt_dir), to_df(twice_dir)
 merged_df = pd.concat([merged_df, txt_df, twice_df])
 txt_tagged, twice_tagged = tagging(txt_df), tagging(twice_df)
 merge_tagged = merge_tagged + txt_tagged + twice_tagged
+
+txt_tagged_words = [tagged.words for tagged in txt_tagged]
+twice_tagged_words = [tagged.words for tagged in twice_tagged]
+
+merge_tagged_sample += txt_tagged_words + twice_tagged_words
