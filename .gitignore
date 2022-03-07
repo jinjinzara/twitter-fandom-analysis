@@ -5,9 +5,7 @@ __pycache__/
 
 .pylint.d/
 config.py
-data/@NCTsmtown/
-data/@ITZYofficial/
-data/@ENHYPEN_members/
+*.zip
 
 # C extensions
 *.so
