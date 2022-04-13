@@ -61,5 +61,5 @@ if __name__ == '__main__':
                               access_token_key=config.twitter_access_token, 
                               access_token_secret=config.twitter_access_secret)
 
-    most_followed = pd.read_csv('data/most_followed.csv')
+    most_followed = pd.read_csv('most_followed.csv')
     most_followed.apply(lambda x: collecting_tweets(x['account'], x['name']), axis=1)
