@@ -6,13 +6,11 @@ Created on Tue Apr 12 20:21:06 2022
 """
 
 import pandas as pd
-import numpy as np
 import os
 import json
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
-from sklearn.preprocessing import MinMaxScaler
 
 #json to dataframe
 def create_tdf(filename):

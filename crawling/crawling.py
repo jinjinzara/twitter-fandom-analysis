@@ -10,6 +10,7 @@ import twitter
 import json
 import time
 import pandas as pd
+import networkx as nx
     
 #collecting filtered stream data
 def collecting_tweets(account, search_keyword):
@@ -55,11 +56,52 @@ def collecting_timeline(account):
         except:
             continue           
 
+#get friendship between two users
+def collecting_network():
+    udf = pd.read_csv('user.csv', index_col=0)
+    udf_sampled = udf.groupby('following_account').sample(10)
+    user_ids = udf_sampled['id'].values.tolist()
+    graph = nx.Graph()
+    for i in range(0, len(user_ids)-1):
+        for j in range(i+1, len(user_ids)):
+            sid = user_ids[i]
+            tid = user_ids[j]
+            w = 0
+            try:
+                time.sleep(1)
+                following_json = twitter_api.ShowFriendship(source_user_id=sid, target_user_id = tid)
+                friendship = following_json['relationship']['target']
+                if friendship['following'] == True:
+                    w += 1
+                elif friendship['followed_by'] == True:
+                    w += 1
+                else:
+                    w = 0
+                graph.add_edge(sid, tid, weight=w)
+                if j % 10 == 0:
+                    print('{} edge add'.format(j))
+            except Exception as e:
+                try:
+                    if e.args[0][0]['code'] == 88:
+                        print(e)
+                        print('{}, {} failed.'.format(sid, tid))
+                        time.sleep(900)
+                    elif e.args[0][0]['code'] == 163:
+                        break
+                    else:
+                        continue
+                except TypeError as e:
+                    print(e)
+        print('{}/{} user complete'.format(i+1, len(user_ids)))
+    return graph
+
 if __name__ == '__main__':
     twitter_api = twitter.Api(consumer_key=config.twitter_consumer_key,
                               consumer_secret=config.twitter_consumer_secret, 
                               access_token_key=config.twitter_access_token, 
                               access_token_secret=config.twitter_access_secret)
 
-    most_followed = pd.read_csv('most_followed.csv')
-    most_followed.apply(lambda x: collecting_tweets(x['account'], x['name']), axis=1)
+    #most_followed = pd.read_csv('most_followed.csv')
+    #most_followed.apply(lambda x: collecting_tweets(x['account'], x['name']), axis=1)
+    graph = collecting_network()
+    nx.write_shp(graph, 'usrNet.DiGraph')
