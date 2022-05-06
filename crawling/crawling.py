@@ -41,20 +41,45 @@ def collecting_multimode(inputs):
         collecting_tweets(account, search_keyword)
               
 #collecting timeline (test)
-def collecting_timeline(account):
-    statuses = twitter_api.GetUserTimeline(screen_name=account, count=10, include_rts=True, exclude_replies=False)
+def collecting_followers(account, followers_count):
+    followers = []
+    f_sample = int(followers_count * 0.0001)
+    while len(followers) < f_sample:
+        f_ids = twitter_api.GetFollowerIDs(screen_name=account)
+        followers = f_ids
+    return followers[:f_sample]
 
-    for status in statuses:
-        print(status.text)
-        
-    followers = twitter_api.GetFollowerIDs(screen_name=account, cursor=-1, count=10, total_count=10)
-    for follower in followers:
-        try:
-            statuses_of_follower = twitter_api.GetUserTimeline(user_id=follower, count=10, include_rts=False, exclude_replies=False)
-            for status_f in statuses_of_follower:
-                print(status_f.text)
-        except:
-            continue           
+def collecting_mention(f_dict):
+    i = len(f_dict)
+    i0 = 0
+    for key in f_dict:
+        G = nx.Graph()
+        i0 += 1
+        followers = f_dict[key]
+        j = len(followers)
+        j0 = 0
+        for follower in followers:
+            j0 += 1
+            print('key: {}/{}, follower: {}/{}'.format(i0,i,j0,j))
+            try:
+                statuses = twitter_api.GetUserTimeline(follower)
+            except Exception as e:
+                print(e)
+                continue
+            for status in statuses:
+                if status.user_mentions:
+                    for m in status.user_mentions:
+                        try:
+                            following = twitter_api.ShowFriendship(source_user_id=m.id, target_screen_name=key)
+                        except Exception as e:
+                            print(e)
+                            continue
+                        if following.get('relationship').get('source').get('following'):
+                            G.add_edge(follower, m.id, )
+                            nx.write_pajek(G, 'data/usrNet/{}.net'.format(key))
+                            print('add edge of ' + key)
+                else:
+                    continue
 
 #get friendship between two users
 def collecting_network():
@@ -99,9 +124,14 @@ if __name__ == '__main__':
     twitter_api = twitter.Api(consumer_key=config.twitter_consumer_key,
                               consumer_secret=config.twitter_consumer_secret, 
                               access_token_key=config.twitter_access_token, 
-                              access_token_secret=config.twitter_access_secret)
+                              access_token_secret=config.twitter_access_secret,
+                              sleep_on_rate_limit=True)
 
-    #most_followed = pd.read_csv('most_followed.csv')
+    most_followed = pd.read_csv('most_followed_in.csv')
+    f_dict = {}
+    for i in most_followed.index:
+        f_dict[most_followed['account'][i]] = collecting_followers(most_followed['account'][i], most_followed['followers_count'][i])
+
     #most_followed.apply(lambda x: collecting_tweets(x['account'], x['name']), axis=1)
-    graph = collecting_network()
-    nx.write_shp(graph, 'usrNet.DiGraph')
+    #graph = collecting_network()
+    #nx.write_shp(graph, 'usrNet.DiGraph')
