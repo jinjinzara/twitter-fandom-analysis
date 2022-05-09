@@ -134,8 +134,8 @@ def draw_networks(artist, subgraphs):
         nx.draw_networkx_nodes(subg, pos, node_size=500, node_color='#0096FF')
         nx.draw_networkx_nodes(subg, pos, nodelist=list(over5.keys()), node_size=1500, node_color='#0437F2')
         nx.draw_networkx_edges(subg, pos, edge_color='#0437F2')
-        #plt.savefig('plot/network/{}.png'.format(artist[i]))
-        plt.show()
+        plt.savefig('plot/network/{}.png'.format(artist[i]))
+        #plt.show()
 
 def ideal_G(n):
     Gi = nx.Graph()
@@ -241,7 +241,7 @@ def getCentralization(centrality, c_type):
 		
 	return network_centrality
 
-def network_info(artist, subgraphs, G):
+def network_info(artist, subgraphs):
     metrics = pd.DataFrame()
     metrics['artist'] = artist
     
@@ -266,11 +266,11 @@ def network_info(artist, subgraphs, G):
     metrics['connectivity'] = [nx.average_node_connectivity(s) for s in subgraphs]
     metrics['efficiency'] = [nx.global_efficiency(s) for s in subgraphs]
     metrics['assortativity'] = [nx.degree_assortativity_coefficient(s) for s in subgraphs]
-    metrics['group_centrality(degree)'] = [nx.group_degree_centrality(G, s.nodes) for s in subgraphs]
-    metrics['group_centrality(betweenness)'] = [nx.group_betweenness_centrality(G, s.nodes) for s in subgraphs]
-    metrics['group_centrality(closeness)'] = [nx.group_closeness_centrality(G, s.nodes) for s in subgraphs]
+    #metrics['group_centrality(degree)'] = [nx.group_degree_centrality(G, s.nodes) for s in subgraphs]
+    #metrics['group_centrality(betweenness)'] = [nx.group_betweenness_centrality(G, s.nodes) for s in subgraphs]
+    #metrics['group_centrality(closeness)'] = [nx.group_closeness_centrality(G, s.nodes) for s in subgraphs]
     metrics['s_metric'] = [nx.s_metric(s, normalized=False) for s in subgraphs]
-    metrics['diameter'] = [nx.diameter(s) for s in subgraphs]
+    #metrics['diameter'] = [nx.diameter(s) for s in subgraphs]
     
     return metrics
 
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     artist = most_followed['name'].iloc[:30].values.tolist()
     draw_networks(artist, subgraphs)
     
-    metrics = network_info(artist, subgraphs, G)
+    metrics = network_info(artist, subgraphs)
     
     # 현재 베스트
     docs = feature_extractor(subgraphs, artist, 5, 8)
@@ -365,6 +365,10 @@ if __name__ == '__main__':
     g2v_norm = sc.fit_transform(g2v)
     clusters = print_plot(g2v_norm)
     metrics['cluster'] = clusters
+    
+    similarity_matrix = pd.DataFrame(cosine_similarity(g2v_norm, g2v_norm))
+    similarity_matrix.index, similarity_matrix.columns = artist, artist
+    similarity_matrix.to_csv('network/fn_v3.3.2.csv')
     
     #this
     posthoc = pairwise_tukeyhsd(metrics['avg_degree'], metrics['cluster'], alpha=0.05)
@@ -377,25 +381,29 @@ if __name__ == '__main__':
     posthoc = pairwise_tukeyhsd(metrics['centralization(degree)'], metrics['cluster'], alpha=0.05)
     print(posthoc)
     
-    #this
+    #this(old)
     posthoc = pairwise_tukeyhsd(metrics['centralization(betweenness)'], metrics['cluster'], alpha=0.05)
     print(posthoc)
     
     posthoc = pairwise_tukeyhsd(metrics['centralization(closeness)'], metrics['cluster'], alpha=0.05)
     print(posthoc)
+    
+    #this(new)
     posthoc = pairwise_tukeyhsd(metrics['connectivity'], metrics['cluster'], alpha=0.05)
     print(posthoc)
+    
     posthoc = pairwise_tukeyhsd(metrics['efficiency'], metrics['cluster'], alpha=0.05)
     print(posthoc)
     posthoc = pairwise_tukeyhsd(metrics['assortativity'], metrics['cluster'], alpha=0.05)
     print(posthoc)
+    '''
     posthoc = pairwise_tukeyhsd(metrics['group_centrality(degree)'], metrics['cluster'], alpha=0.05)
     print(posthoc)
     posthoc = pairwise_tukeyhsd(metrics['group_centrality(betweenness)'], metrics['cluster'], alpha=0.05)
     print(posthoc)
     posthoc = pairwise_tukeyhsd(metrics['group_centrality(closeness)'], metrics['cluster'], alpha=0.05)
     print(posthoc)
-    
+    '''
     #this
     posthoc = pairwise_tukeyhsd(metrics['s_metric'], metrics['cluster'], alpha=0.05)
     print(posthoc)
