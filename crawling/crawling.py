@@ -42,12 +42,9 @@ def collecting_multimode(inputs):
               
 #collecting timeline (test)
 def collecting_followers(account, followers_count):
-    followers = []
     f_sample = int(followers_count * 0.0001)
-    while len(followers) < f_sample:
-        f_ids = twitter_api.GetFollowerIDs(screen_name=account)
-        followers = f_ids
-    return followers[:f_sample]
+    f_ids = twitter_api.GetFollowerIDs(screen_name=account, total_count=f_sample)
+    return f_ids
 
 def collecting_mention(f_dict):
     i = len(f_dict)
@@ -131,7 +128,8 @@ if __name__ == '__main__':
     f_dict = {}
     for i in most_followed.index:
         f_dict[most_followed['account'][i]] = collecting_followers(most_followed['account'][i], most_followed['followers_count'][i])
-
+        print('{}/{} complete'.format(i+1, len(most_followed)))
+        
     #most_followed.apply(lambda x: collecting_tweets(x['account'], x['name']), axis=1)
     #graph = collecting_network()
     #nx.write_shp(graph, 'usrNet.DiGraph')
