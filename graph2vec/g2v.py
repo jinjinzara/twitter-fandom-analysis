@@ -113,20 +113,25 @@ def doc2vec(docs):
     doc2vec.train(docs, total_examples=doc2vec.corpus_count, epochs=doc2vec.epochs)
     return doc2vec
 
-def print_plot(embedding_vectors):
-    two_dim_vectors = TSNE(n_components=2, random_state=100).fit_transform(embedding_vectors)
-    fig, ax = plt.subplots(figsize=(16,20))
-    kmeans = KMeans(n_clusters=3).fit(embedding_vectors)
-    clusters = kmeans.labels_
-    sns.scatterplot(two_dim_vectors[:,0], two_dim_vectors[:,1], hue=clusters)
-    return clusters
+def print_plot(embedding_vectors, clusters, artist):
+    two_dim_vectors = TSNE(n_components=2, 
+                           random_state=1, 
+                           perplexity=5).fit_transform(embedding_vectors)
+    fig, ax = plt.subplots(figsize=(8,5))
+    for i in range(len(embedding_vectors)):
+        x, y, c = two_dim_vectors[i,0], two_dim_vectors[i,1], str(i+1)
+        plt.text(x, y, c)
+    #kmeans = KMeans(n_clusters=3).fit(embedding_vectors)
+    #clusters = kmeans.labels_
+    sns.scatterplot(two_dim_vectors[:,0], two_dim_vectors[:,1], hue=clusters, palette=['#1E2F97', '#2ECBE9', '#FFD200'], sizes=(100, 100))
+    
 
 def draw_networks(artist, subgraphs):
     for i in range(len(artist)):
         subg = subgraphs[i]
         plt.figure(figsize=(30,15))
         title_font = {
-            'fontsize': 64,
+            'fontsize': 100,
             'fontweight': 'bold'}
         plt.title(artist[i], fontdict=title_font, loc='left', pad=20)
         pos = nx.kamada_kawai_layout(subg, scale=2)
@@ -135,7 +140,7 @@ def draw_networks(artist, subgraphs):
         nx.draw_networkx_nodes(subg, pos, nodelist=list(over5.keys()), node_size=1500, node_color='#0437F2')
         nx.draw_networkx_edges(subg, pos, edge_color='#0437F2')
         plt.savefig('plot/network/{}.png'.format(artist[i]))
-        #plt.show()
+        plt.show()
 
 def ideal_G(n):
     Gi = nx.Graph()
@@ -254,11 +259,11 @@ def network_info(artist, subgraphs):
         avgs.append(round(avg, 2))
     metrics['avg_degree'] = avgs
     metrics['density'] = [round(nx.density(g),3) for g in subgraphs]
-    '''
-    metrics['centralization(degree)'] = [centralization_d(s) for s in subgraphs]
-    metrics['centralization(betweenness)'] = [centralization_b(s) for s in subgraphs]
-    metrics['centralization(closeness)'] = [centralization_c(s) for s in subgraphs]
-    '''
+    
+    #metrics['centralization(degree)'] = [centralization_d(s) for s in subgraphs]
+    #metrics['centralization(betweenness)'] = [centralization_b(s) for s in subgraphs]
+    #metrics['centralization(closeness)'] = [centralization_c(s) for s in subgraphs]
+    
     metrics['centralization(degree)'] = [getCentralization(nx.degree_centrality(s), 'degree') for s in subgraphs]
     metrics['centralization(betweenness)'] = [getCentralization(nx.betweenness_centrality(s), 'between') for s in subgraphs]
     metrics['centralization(closeness)'] = [getCentralization(nx.closeness_centrality(s), 'close') for s in subgraphs]
@@ -358,6 +363,8 @@ if __name__ == '__main__':
     
     metrics = network_info(artist, subgraphs)
     
+    most_followed = pd.read_csv('most_followed_in.csv')
+    
     # 현재 베스트
     docs = feature_extractor(subgraphs, artist, 5, 8)
     doc2vec = Doc2Vec(docs, vector_size=32, window=0, min_count=5, dm=0, workers=4, epochs=10, alpha=0.025, seed=10)
@@ -407,3 +414,34 @@ if __name__ == '__main__':
     #this
     posthoc = pairwise_tukeyhsd(metrics['s_metric'], metrics['cluster'], alpha=0.05)
     print(posthoc)
+    
+    mf = pd.read_csv('most_followed_100.csv')
+    mf = mf.sort_values('activity_period', ascending=False)
+    artist = mf['name'].values.tolist()
+    accounts = mf['account'].values.tolist()
+    graphs = []
+    for ac in accounts:
+        graphs.append(nx.read_pajek('data/usrNet/{}.net'.format(ac)))
+        
+    graphsd = []
+    for g in graphs:
+        gd = nx.Graph(g.copy())
+        gd.remove_edges_from(list(nx.selfloop_edges(gd)))
+        graphsd.append(gd)
+        
+    metrics2 = network_info(artist, graphsd)
+    metrics2['activity_p'] = mf.reset_index()['activity_period']
+    
+    plt.plot(metrics2['activity_p'], metrics2['size'])
+    plt.ylabel('activity_p')
+    plt.show()
+    plt.plot(metrics2['activity_p'], metrics2['avg_degree'])
+    
+    n_metrics = metrics2.columns.tolist()
+    n_metrics = n_metrics[1:-1]
+    for nm in n_metrics:
+        plt.figure(figsize=(10,6))
+        plt.plot(metrics2['activity_p'], metrics2[nm], 'bo')
+        plt.xlabel('activity_period')
+        plt.ylabel(nm)
+        plt.show()

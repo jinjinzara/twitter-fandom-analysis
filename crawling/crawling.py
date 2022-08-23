@@ -11,6 +11,9 @@ import json
 import time
 import pandas as pd
 import networkx as nx
+import pickle
+import random
+import os.path
     
 #collecting filtered stream data
 def collecting_tweets(account, search_keyword):
@@ -42,7 +45,7 @@ def collecting_multimode(inputs):
               
 #collecting timeline (test)
 def collecting_followers(account, followers_count):
-    f_sample = int(followers_count * 0.0001)
+    f_sample = 5000
     f_ids = twitter_api.GetFollowerIDs(screen_name=account, total_count=f_sample)
     return f_ids
 
@@ -50,33 +53,37 @@ def collecting_mention(f_dict):
     i = len(f_dict)
     i0 = 0
     for key in f_dict:
-        G = nx.Graph()
-        i0 += 1
-        followers = f_dict[key]
-        j = len(followers)
-        j0 = 0
-        for follower in followers:
-            j0 += 1
-            print('key: {}/{}, follower: {}/{}'.format(i0,i,j0,j))
-            try:
-                statuses = twitter_api.GetUserTimeline(follower)
-            except Exception as e:
-                print(e)
-                continue
-            for status in statuses:
-                if status.user_mentions:
-                    for m in status.user_mentions:
-                        try:
-                            following = twitter_api.ShowFriendship(source_user_id=m.id, target_screen_name=key)
-                        except Exception as e:
-                            print(e)
-                            continue
-                        if following.get('relationship').get('source').get('following'):
-                            G.add_edge(follower, m.id, )
-                            nx.write_pajek(G, 'data/usrNet/{}.net'.format(key))
-                            print('add edge of ' + key)
-                else:
+        if not os.path.isfile('data/usrNet/{}.net'.format(key)):
+            G = nx.Graph()
+            i0 += 1
+            followers = f_dict[key]
+            j = len(followers)
+            j0 = 0
+            for follower in followers:
+                j0 += 1
+                print('key: {}/{}, follower: {}/{}'.format(i0,i,j0,j))
+                try:
+                    statuses = twitter_api.GetUserTimeline(follower)
+                except Exception as e:
+                    print(e)
                     continue
+                for status in statuses:
+                    if status.user_mentions:
+                        for m in status.user_mentions:
+                            try:
+                                following = twitter_api.ShowFriendship(source_user_id=m.id, target_screen_name=key)
+                            except Exception as e:
+                                print(e)
+                                continue
+                            if following.get('relationship').get('source').get('following'):
+                                G.add_edge(follower, m.id)
+                                nx.write_pajek(G, 'data/usrNet/{}.net'.format(key))
+                                print('add edge of ' + key)
+                    else:
+                        continue
+        else:
+            i0 += 1
+            print('{} network exists'.format(key))
 
 #get friendship between two users
 def collecting_network():
@@ -129,7 +136,21 @@ if __name__ == '__main__':
     for i in most_followed.index:
         f_dict[most_followed['account'][i]] = collecting_followers(most_followed['account'][i], most_followed['followers_count'][i])
         print('{}/{} complete'.format(i+1, len(most_followed)))
+    
+    with open('followers.p', 'wb') as f:
+        pickle.dump(f_dict, f)
         
+    with open('followers.p', 'rb') as f:
+        f_dict = pickle.load(f)
+    
+    f_dict_sample = {}
+    
+    random.seed(100)
+    for key, value in f_dict.items():
+        followers_s = random.sample(value, 100)
+        f_dict_sample[key] = followers_s
+    
+    collecting_mention(f_dict_sample)
     #most_followed.apply(lambda x: collecting_tweets(x['account'], x['name']), axis=1)
     #graph = collecting_network()
     #nx.write_shp(graph, 'usrNet.DiGraph')
