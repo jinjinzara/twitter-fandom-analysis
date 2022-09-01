@@ -429,13 +429,12 @@ if __name__ == '__main__':
         gd.remove_edges_from(list(nx.selfloop_edges(gd)))
         graphsd.append(gd)
         
+    artistp = []
+    for i in mf.index:
+        artistp.append('{}({}, {})'.format(mf['name'].loc[i], int(mf['debut_year'].loc[i]), int(mf['activity_period'].loc[i])))
+        
     metrics2 = network_info(artist, graphsd)
     metrics2['activity_p'] = mf.reset_index()['activity_period']
-    
-    plt.plot(metrics2['activity_p'], metrics2['size'])
-    plt.ylabel('activity_p')
-    plt.show()
-    plt.plot(metrics2['activity_p'], metrics2['avg_degree'])
     
     n_metrics = metrics2.columns.tolist()
     n_metrics = n_metrics[1:-1]
