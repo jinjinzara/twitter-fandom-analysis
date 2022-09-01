@@ -9,6 +9,7 @@ config.py
 data/
 network/
 plot/
+*.csv
 
 # C extensions
 *.so
