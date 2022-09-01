@@ -147,7 +147,7 @@ if __name__ == '__main__':
     
     random.seed(100)
     for key, value in f_dict.items():
-        followers_s = random.sample(value, 100)
+        followers_s = random.sample(value, 500)
         f_dict_sample[key] = followers_s
     
     collecting_mention(f_dict_sample)
