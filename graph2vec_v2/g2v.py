@@ -20,29 +20,23 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pickle
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
-from yellowbrick.cluster import SilhouetteVisualizer
-from sklearn.metrics import silhouette_score
-import warnings
-warnings.filterwarnings(action='ignore')
 
-def plot_tsne(embedding_vectors, clusters, artist):
+def print_plot(embedding_vectors, clusters, artist):
     two_dim_vectors = TSNE(n_components=2, 
                            random_state=1, 
-                           perplexity=50).fit_transform(embedding_vectors)
-    fig, ax = plt.subplots(figsize=(16,10))
+                           perplexity=5).fit_transform(embedding_vectors)
+    fig, ax = plt.subplots(figsize=(8,5))
     for i in range(len(embedding_vectors)):
         x, y, c = two_dim_vectors[i,0], two_dim_vectors[i,1], str(i+1)
         plt.text(x, y, c)
-
-    sns.scatterplot(two_dim_vectors[:,0], two_dim_vectors[:,1], hue=clusters, palette='bright')
-    plt.show()
+    #kmeans = KMeans(n_clusters=3).fit(embedding_vectors)
+    #clusters = kmeans.labels_
+    sns.scatterplot(two_dim_vectors[:,0], two_dim_vectors[:,1], hue=clusters, palette=['#1E2F97', '#2ECBE9', '#FFD200'], sizes=(100, 100))
     
 def draw_networks(artist, subgraphs):
     for i in range(len(artist)):
         subg = subgraphs[i]
         plt.figure(figsize=(30,15))
-        plt.axis('off')
-        plt.grid(b=None)
         title_font = {
             'fontsize': 100,
             'fontweight': 'bold'}
@@ -52,10 +46,7 @@ def draw_networks(artist, subgraphs):
         nx.draw_networkx_nodes(subg, pos, node_size=500, node_color='#0096FF')
         nx.draw_networkx_nodes(subg, pos, nodelist=list(over5.keys()), node_size=1500, node_color='#0437F2')
         nx.draw_networkx_edges(subg, pos, edge_color='#0437F2')
-        try:
-            plt.savefig('plot/network_ex/{}.png'.format(artist[i]))
-        except:
-            plt.savefig('plot/network_ex/{}.png'.format(artist[i].replace('*', '')))
+        plt.savefig('plot/network/{}.png'.format(artist[i]))
         plt.show()
 
 def feature_extractor(graphs, gnames, iteration, hash_size):
@@ -208,128 +199,48 @@ def network_info(artist, subgraphs):
     return metrics
 
 def posthoc_test(metric, metric_table):
-    print('metric: {}'.format(metric))
     posthoc = pairwise_tukeyhsd(metrics[metric], metrics['cluster'], alpha=0.05)
     print(posthoc)
-    print('\n')
-    
-def plot_elbow(v):
-    distortions = []
-    K = range(1,10)
-    for k in K:
-        kmeanModel = KMeans(n_clusters=k)
-        kmeanModel.fit(v)
-        distortions.append(kmeanModel.inertia_)
-        
-    plt.figure(figsize=(16,8))
-    plt.plot(K, distortions, 'bx-')
-    plt.xlabel('k')
-    plt.ylabel('Distortion')
-    plt.title('The Elbow Method showing the optimal k')
-    plt.show()
 
-def plot_silhouette(data, param_init='random', param_n_init=10, param_max_iter=300):
-    clusters_range = range(2,15)
-    results = []
-
-    for i in clusters_range:
-        clusterer = KMeans(n_clusters=i, init=param_init, n_init=param_n_init, max_iter=param_max_iter, random_state=0)
-        cluster_labels = clusterer.fit_predict(data)
-        silhouette_avg = silhouette_score(data, cluster_labels)
-        results.append([i, silhouette_avg])
-
-    result = pd.DataFrame(results, columns=["n_clusters", "silhouette_score"])
-    pivot_km = pd.pivot_table(result, index="n_clusters", values="silhouette_score")
-
-    plt.figure()
-    sns.heatmap(pivot_km, annot=True, linewidths=.5, fmt='.3f', cmap=sns.cm._rocket_lut)
-    plt.tight_layout()
-    plt.show()
-
-def exclude_verified(graph):
-    with open('users.json', 'r') as f:
-        users = json.load(f)
-        
-    verified_users = []
-    
-    for k,v in users.items():
-        if v['verified']:
-            if k in graph.nodes:
-                verified_users.append(k)
-    
-    print(len(verified_users))
-    graph.remove_nodes_from(verified_users)
-    return graph
-    
 if __name__ == '__main__':
     
     most_followed = pd.read_csv('most_followed_in.csv')
-    most_followed = most_followed[:130]
+    accounts = most_followed['account'].values.tolist()
+    gnames = most_followed['name'].values.tolist()
     
     with open('f_dict.p', 'rb') as f:
         f_dict = pickle.load(f)
 
+    
     artist = most_followed['name'].values.tolist()
     accounts = most_followed['account'].values.tolist()
     
     graphs = []
     for ac in accounts:
         G = nx.read_pajek('data/usrNet/{}.net'.format(ac))
-        G.remove_edges_from(list(nx.selfloop_edges(nx.Graph(G))))
-        graphs.append(nx.Graph(G))
+        G_in = G.remove_edges_from(list(nx.selfloop_edges(nx.Graph(G.copy()))))
+        graphs.append(G_in)
         
-    with open('users.json', 'r') as f:
-        users = json.load(f)
-        
-    exclude_nodes = []
-    for g in graphs:
-        for n in g.nodes:
-            if n in users.keys():
-                v = users[n]
-                if v['verified']:
-                    exclude_nodes.append(n)
-    
-    graphs_ex = []
-    for g in graphs:
-        ge = g.copy()
-        ge.remove_nodes_from(exclude_nodes)
-        graphs_ex.append(ge)
-        
-    graphs = graphs_ex
-    
-    '''   
     artist_info = []
     for i in most_followed.index:
         artist_info.append('{}({}, {})'.format(most_followed['name'].loc[i], 
                                                int(most_followed['debut_year'].loc[i]), 
                                                int(most_followed['activity_period'].loc[i])))
-   '''
+   
     #draw_networks(artist_info, graphs)
-    #draw_networks(artist, graphs)
+    draw_networks(artist, graphs)
     
     metrics = network_info(artist, graphs)
-    #metrics = pd.read_csv('metrics_all.csv')
-    print('Network metric complete')
     
     sc = MinMaxScaler()
     
     # 현재 베스트
-    docs = feature_extractor(graphs, artist, iteration=40, hash_size=8)
-    doc2vec = Doc2Vec(docs, vector_size=16, window=0, min_count=5, dm=0, workers=4, epochs=10, alpha=0.025, seed=10)
+    docs = feature_extractor(graphs, artist, 5, 8)
+    doc2vec = Doc2Vec(docs, vector_size=32, window=0, min_count=5, dm=0, workers=4, epochs=10, alpha=0.025, seed=10)
     g2v = doc2vec.dv.vectors
     g2v_norm = sc.fit_transform(g2v)
-    
-    plot_elbow(g2v_norm)
-    plot_silhouette(g2v_norm)
-    
-    kmeans = KMeans(n_clusters=4).fit(g2v_norm)
-    clusters = kmeans.labels_
-    plot_tsne(g2v_norm, clusters, artist)
+    clusters = print_plot(g2v_norm)
     metrics['cluster'] = clusters
-    
-    sns.set_style("white")
-    sns.countplot(x='cluster', data=metrics)
-    plt.show()
     
     posthoc_test('avg_degree', metrics)
     posthoc_test('density', metrics)
@@ -340,4 +251,3 @@ if __name__ == '__main__':
     posthoc_test('efficiency', metrics)
     posthoc_test('assortativity', metrics)
     posthoc_test('s_metric', metrics)
-    

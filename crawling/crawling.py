@@ -14,7 +14,7 @@ import networkx as nx
 import pickle
 import random
 import os.path
-
+    
 #collecting filtered stream data
 def collecting_tweets(account, search_keyword):
     start = time.time()
@@ -123,11 +123,6 @@ def collecting_network():
                     print(e)
         print('{}/{} user complete'.format(i+1, len(user_ids)))
     return graph
-
-def user_info(fgraphs):
-    for fg in fgraphs:
-        fans = list(fg.nodes)
-        twitter_api.getuser
 
 if __name__ == '__main__':
     twitter_api = twitter.Api(consumer_key=config.twitter_consumer_key,
