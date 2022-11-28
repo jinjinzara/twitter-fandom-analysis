@@ -22,25 +22,27 @@ import pickle
 from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from yellowbrick.cluster import SilhouetteVisualizer
 from sklearn.metrics import silhouette_score
+from datetime import datetime
 import warnings
 warnings.filterwarnings(action='ignore')
 
 def plot_tsne(embedding_vectors, clusters, artist):
     two_dim_vectors = TSNE(n_components=2, 
                            random_state=1, 
-                           perplexity=50).fit_transform(embedding_vectors)
-    fig, ax = plt.subplots(figsize=(16,10))
+                           perplexity=10).fit_transform(embedding_vectors)
+
+    fig, ax = plt.subplots(figsize=(8,5))
     for i in range(len(embedding_vectors)):
         x, y, c = two_dim_vectors[i,0], two_dim_vectors[i,1], str(i+1)
         plt.text(x, y, c)
 
-    sns.scatterplot(two_dim_vectors[:,0], two_dim_vectors[:,1], hue=clusters, palette='bright')
+    sns.scatterplot(x=two_dim_vectors[:,0], y=two_dim_vectors[:,1], hue=clusters, palette='bright')
     plt.show()
     
 def draw_networks(artist, subgraphs):
     for i in range(len(artist)):
         subg = subgraphs[i]
-        plt.figure(figsize=(30,15))
+        plt.figure(figsize=(20,12))
         plt.axis('off')
         plt.grid(b=None)
         title_font = {
@@ -53,16 +55,16 @@ def draw_networks(artist, subgraphs):
         nx.draw_networkx_nodes(subg, pos, nodelist=list(over5.keys()), node_size=1500, node_color='#0437F2')
         nx.draw_networkx_edges(subg, pos, edge_color='#0437F2')
         try:
-            plt.savefig('plot/network_ex/{}.png'.format(artist[i]))
+            plt.savefig('plot/network/{}.png'.format(artist[i]))
         except:
-            plt.savefig('plot/network_ex/{}.png'.format(artist[i].replace('*', '')))
+            plt.savefig('plot/network/{}.png'.format(artist[i].replace('*', '')))
         plt.show()
 
-def feature_extractor(graphs, gnames, iteration, hash_size):
+def feature_extractor(graphs, gnames, n_neighbor=3, hash_size=16):
     docs = []
     i = 0
     for g in graphs:
-        features = nx.weisfeiler_lehman_subgraph_hashes(g, iterations=iteration, digest_size=hash_size)
+        features = nx.weisfeiler_lehman_subgraph_hashes(g, iterations=n_neighbor, digest_size=hash_size)
         features = list(features.values())
         features = ['_'.join(ft) for ft in features]
         doc = TaggedDocument(words=features, tags=[gnames[i]])
@@ -246,90 +248,106 @@ def plot_silhouette(data, param_init='random', param_n_init=10, param_max_iter=3
     plt.tight_layout()
     plt.show()
 
-def exclude_verified(graph):
-    with open('users.json', 'r') as f:
-        users = json.load(f)
+def get_filtered_followers(most_followed):
+    all_ffs = []
+    for i in most_followed.index:
+        name = most_followed['name'][i]
+        filepath = ('data/followers_all/{}.p'.format(name)).replace('*', ' ').replace('!', '')
+        with open(filepath, 'rb') as f:
+            followers = pickle.load(f)
+          
+        filtered_fs = []
+        for follower in followers:
+            c_date = datetime.strptime(follower.created_at,'%a %b %d %H:%M:%S +0000 %Y')
+            if c_date < datetime(2022,5,1) and not follower.verified:
+                filtered_fs.append(follower)
+        all_ffs.append(filtered_fs)
+    return all_ffs
+
+def get_ex_info():
+    user_info_cols = ['n_custom_profile_of_fans', 'n_followers_of_fans', 'n_friends_of_fans', 'ff_ratio_of_fans','n_tweets_of_fans', 'n_core_fans']
+    most_followed[user_info_cols] = 0
+    
+    all_filtered_fs = get_filtered_followers(most_followed)
+    for i in most_followed.index:
+        followers = all_filtered_fs[i]
+        artist_name = most_followed['name'][i]
+        n = len(followers)
+        n_custom_profile, n_followers, n_friends, friends_followers_ratio, n_tweets, n_core = 0, 0, 0, 0, 0, 0
+        for follower in followers:
+            n_custom_profile += int(follower.default_profile_image)
+            n_followers += follower.followers_count / n
+            n_friends += follower.friends_count / n
+            if follower.followers_count != 0:
+                friends_followers_ratio += (follower.friends_count / follower.followers_count) / n
+            n_tweets += follower.statuses_count / n
+            if artist_name.lower() in follower.screen_name or \
+                artist_name.lower() in follower.description.lower():
+                    n_core += 1
+        most_followed['n_custom_profile_of_fans'][i] = n_custom_profile
+        most_followed['n_followers_of_fans'][i] = n_followers
+        most_followed['n_friends_of_fans'][i] = n_friends
+        most_followed['ff_ratio_of_fans'][i] = friends_followers_ratio
+        most_followed['n_tweets_of_fans'][i] = n_tweets
+        most_followed['n_core_fans'][i] = n_core
         
-    verified_users = []
+    metrics[user_info_cols] = most_followed[user_info_cols]
     
-    for k,v in users.items():
-        if v['verified']:
-            if k in graph.nodes:
-                verified_users.append(k)
-    
-    print(len(verified_users))
-    graph.remove_nodes_from(verified_users)
-    return graph
+    metrics['n_followers_of_artist'] = most_followed['followers_count']
+    metrics['gender'] = most_followed['gender_en']
     
 if __name__ == '__main__':
     
-    most_followed = pd.read_csv('most_followed_in.csv')
-    most_followed = most_followed[:130]
-    
-    with open('f_dict.p', 'rb') as f:
-        f_dict = pickle.load(f)
+    most_followed = pd.read_csv('crawling/top100.csv')
+    most_followed = most_followed[:40]
+    most_followed['gender_en'] = most_followed['gender'].map({'M':0, 'MIX':1, 'F':2})
 
-    artist = most_followed['name'].values.tolist()
+    artists = most_followed['name'].values.tolist()
     accounts = most_followed['account'].values.tolist()
     
     graphs = []
-    for ac in accounts:
-        G = nx.read_pajek('data/usrNet/{}.net'.format(ac))
+    
+    for artist in artists:
+        filepath_n = ('data/network/{}.net'.format(artist)).replace('*', ' ').replace('!', '')
+        
+        G = nx.read_pajek(filepath_n)
         G.remove_edges_from(list(nx.selfloop_edges(nx.Graph(G))))
         graphs.append(nx.Graph(G))
-        
-    with open('users.json', 'r') as f:
-        users = json.load(f)
-        
-    exclude_nodes = []
-    for g in graphs:
-        for n in g.nodes:
-            if n in users.keys():
-                v = users[n]
-                if v['verified']:
-                    exclude_nodes.append(n)
-    
-    graphs_ex = []
-    for g in graphs:
-        ge = g.copy()
-        ge.remove_nodes_from(exclude_nodes)
-        graphs_ex.append(ge)
-        
-    graphs = graphs_ex
-    
-    '''   
-    artist_info = []
-    for i in most_followed.index:
-        artist_info.append('{}({}, {})'.format(most_followed['name'].loc[i], 
-                                               int(most_followed['debut_year'].loc[i]), 
-                                               int(most_followed['activity_period'].loc[i])))
-   '''
+
     #draw_networks(artist_info, graphs)
-    #draw_networks(artist, graphs)
+    draw_networks(artists, graphs)
     
-    metrics = network_info(artist, graphs)
+    metrics = network_info(artists, graphs)
     #metrics = pd.read_csv('metrics_all.csv')
     print('Network metric complete')
     
     sc = MinMaxScaler()
     
     # 현재 베스트
-    docs = feature_extractor(graphs, artist, iteration=40, hash_size=8)
-    doc2vec = Doc2Vec(docs, vector_size=16, window=0, min_count=5, dm=0, workers=4, epochs=10, alpha=0.025, seed=10)
-    g2v = doc2vec.dv.vectors
+    docs = feature_extractor(graphs, artists, n_neighbor=5, hash_size=8)
+    #doc2vec = Doc2Vec(docs, vector_size=16, window=0, min_count=5, dm=0, workers=4, epochs=10, alpha=0.025, seed=10)
+    doc2vec = Doc2Vec(docs, vector_size=16)
+    doc2vec.build_vocab(docs)
+    
+    epochs = 20
+    for i in range(epochs):
+        doc2vec.train(docs, total_examples=doc2vec.corpus_count, epochs=100)
+    
+    g2v = np.array([doc2vec.infer_vector(doc.words) for doc in docs])
     g2v_norm = sc.fit_transform(g2v)
+    #g2v_norm = g2v
     
     plot_elbow(g2v_norm)
     plot_silhouette(g2v_norm)
     
-    kmeans = KMeans(n_clusters=4).fit(g2v_norm)
+    kmeans = KMeans(n_clusters=3).fit(g2v_norm)
     clusters = kmeans.labels_
-    plot_tsne(g2v_norm, clusters, artist)
     metrics['cluster'] = clusters
-    
     sns.set_style("white")
-    sns.countplot(x='cluster', data=metrics)
+    sns.countplot(x='cluster', data=metrics, palette='bright')
     plt.show()
+    
+    plot_tsne(g2v_norm, clusters, artists)
     
     posthoc_test('avg_degree', metrics)
     posthoc_test('density', metrics)
@@ -340,4 +358,13 @@ if __name__ == '__main__':
     posthoc_test('efficiency', metrics)
     posthoc_test('assortativity', metrics)
     posthoc_test('s_metric', metrics)
+    posthoc_test('n_followers_of_artist', metrics)
+    posthoc_test('n_custom_profile_of_fans', metrics)
+    posthoc_test('n_followers_of_fans', metrics)
+    posthoc_test('n_friends_of_fans', metrics)
+    posthoc_test('ff_ratio_of_fans', metrics)
+    posthoc_test('n_tweets_of_fans', metrics)
+    posthoc_test('n_core_fans', metrics)
+    posthoc_test('gender', metrics)
+    
     

@@ -1,101 +1,101 @@
-rank,name,followers_count,account
-1st,BTS,47807327,BTS_twt
-2nd,EXO,13348657,weareoneEXO
-3rd,TWICE,11012422,JYPETWICE
-4th,SEVENTEEN,10747186,pledis_17
-5th,TXT,10280735,TXT_bighit
-7th,NCT,10088359,NCTsmtown
-8th,GOT7,9587891,GOT7Official
-9th,NCT Dream,9039757,NCTsmtown_DREAM
-10th,Stray Kids,8690551,Stray_Kids
-11th,NCT 127,8599755,NCTsmtown_127
-12th,BLACKPINK,7971306,BLACKPINK
-13th,ENHYPEN,6021804,ENHYPEN
-14th,Red Velvet,5711074,RVsmtown
-15th,ITZY,5473494,ITZYofficial
-16th,MONSTA X,5148774,OfficialMonstaX
-17th,TREASURE,4568723,treasuremembers
-18th,ASTRO,4220033,offclASTRO
-19th,Girls' Generation,3913704,GirlsGeneration
-20th,ATEEZ,3640352,ATEEZofficial
-21st,aespa,3267044,aespa_official
-22nd,SuperM,3017279,superm
-23rd,Wanna One,2808728,WannaOne_twt
-24th,MAMAMOO,2467907,RBW_MAMAMOO
-25th,SHINee,2313747,SHINee
-26th,WayV,2266892,WayV_official
-27th,DAY6,2253893,day6official
-28th,BIGBANG,1834727,YG_GlobalVIP
-29th,(G)I-DLE,1741829,G_I_DLE
-30th,THE BOYZ,1675917,IST_THEBOYZ
-31st,BTOB,1508041,OFFICIALBTOB
-32nd,SUPER JUNIOR,1458438,SJofficial
-33rd,CNBLUE,1361102,official_CNBLUE
-34th,2PM,1356967,follow_2PM
-35th,GFRIEND,1343465,GFRDofficial
-36th,IZ*ONE,1297605,official_izone
-37th,PENTAGON,1273759,CUBE_PTG
-38th,iKON,1228417,YG_iKONIC
-39th,Kep1er,1129829,official_kep1er
-40th,IVE,1060477,IVEstarship
-41st,VIXX,1008955,RealVIXX
-42nd,LOONA,986960,loonatheworld
-43rd,NU'EST,946644,NUESTNEWS
-46th,Apink,856511,Apink_2011
-47th,SF9,833592,SF9official
-48th,NiziU,807623,NiziU__official
-49th,X1,801547,x1official101
-50th,ONEUS,797677,official_ONEUS
-51st,LE SSERAFIM,768989,le_sserafim
-52nd,STAYC,694052,STAYC_official
-53rd,NMIXX,673858,NMIXX_official
-54th,NewJeans,658372,NewJeans_ADOR
-55th,INFINITE,619005,Official_IFNT
-57th,AB6IX,610489,AB6IX
-58th,SISTAR,584428,sistarsistar
-59th,CRAVITY,575093,CRAVITYstarship
-60th,TEEN TOP,569770,TEEN_TOP
-61st,A.C.E,540810,official_ACE7
-62nd,EVERGLOW,537168,EVERGLOW_twt
-63rd,VICTON,535676,VICTON1109
-64th,Wonder Girls,518230,WonderGirls
-65th,KARD,505874,KARD_Official
-66th,Dreamcatcher,497569,hf_dreamcatcher
-67th,EXID,483366,EXIDofficial
-68th,fromis_9,462694,realfromis_9
-69th,Block B,434906,blockb_official
-70th,U-KISS,430480,ukisskorea
-71st,CIX,418447,CIX_Official
-72nd,OH MY GIRL,413025,WM_OHMYGIRL
-73rd,WJSN,403040,WJSN_Cosmic
-75th,miss A,390853,JYPEmissA
-76th,CLC,372311,CUBECLC
-77th,GOT the beat,351124,GirlsOnTop_SM
-78th,WINNER,349237,yg_winnercity
-79th,P1Harmony,348974,P1H_official
-80th,Golden Child,342325,Hi_Goldenness
-81st,2NE1,337041,GlobalBlackjack
-82nd,TVXQ!,335365,TVXQ
-83rd,Xdinary Heroes,324032,XH_official
-84th,B1A4,322182,_B1A4OFFICIAL
-85th,Boyfriend,307625,G_BoyFriend
-86th,Lovelyz,303491,Official_LVLZ
-87th,MOMOLAND,293489,MMLD_Official
-88th,Weeekly,292895,_Weeekly
-89th,MCND,292680,McndOfficial_
-90th,WEi,292412,WEi__Official
-91st,The Rose,291510,TheRose_0803
-92nd,Weki Meki,282192,WekiMeki
-93rd,Billlie,264920,Billlieofficial
-95th,MXM,228592,bnmboysofficial
-96th,SECRET NUMBER,225576,5ecretNumber
-97th,TEMPEST,225517,TPST__official
-98th,TO1,218221,TO1_offcl
-99th,Shinhwa,215028,ShinhwaCompany
-100th,VIVIZ,213521,VIVIZ_official
-101st,Cherry Bullet,211229,cherrybullet
-102nd,N.Flying,205723,NFlyingofficial
-103rd,ONF,203267,WM_ONOFF
-104th,Girl's Day,202816,Girls_Day
-105th,VERIVERY,190560,by_verivery
-106th,JUST B,187480,JUSTB_Official
+rank,name,followers_count,gender,account
+1st,BTS,47807327,M,BTS_twt
+2nd,EXO,13348657,M,weareoneEXO
+3rd,TWICE,11012422,F,JYPETWICE
+4th,SEVENTEEN,10747186,M,pledis_17
+5th,TXT,10280735,M,TXT_bighit
+7th,NCT,10088359,M,NCTsmtown
+8th,GOT7,9587891,M,GOT7Official
+9th,NCT Dream,9039757,M,NCTsmtown_DREAM
+10th,Stray Kids,8690551,M,Stray_Kids
+11th,NCT 127,8599755,M,NCTsmtown_127
+12th,BLACKPINK,7971306,F,BLACKPINK
+13th,ENHYPEN,6021804,M,ENHYPEN
+14th,Red Velvet,5711074,F,RVsmtown
+15th,ITZY,5473494,F,ITZYofficial
+16th,MONSTA X,5148774,M,OfficialMonstaX
+17th,TREASURE,4568723,M,treasuremembers
+18th,ASTRO,4220033,M,offclASTRO
+19th,Girls' Generation,3913704,F,GirlsGeneration
+20th,ATEEZ,3640352,M,ATEEZofficial
+21st,aespa,3267044,F,aespa_official
+22nd,SuperM,3017279,M,superm
+23rd,Wanna One,2808728,M,WannaOne_twt
+24th,MAMAMOO,2467907,F,RBW_MAMAMOO
+25th,SHINee,2313747,M,SHINee
+26th,WayV,2266892,M,WayV_official
+27th,DAY6,2253893,M,day6official
+28th,BIGBANG,1834727,M,YG_GlobalVIP
+29th,(G)I-DLE,1741829,F,G_I_DLE
+30th,THE BOYZ,1675917,M,IST_THEBOYZ
+31st,BTOB,1508041,M,OFFICIALBTOB
+32nd,SUPER JUNIOR,1458438,M,SJofficial
+33rd,CNBLUE,1361102,M,official_CNBLUE
+34th,2PM,1356967,M,follow_2PM
+35th,GFRIEND,1343465,F,GFRDofficial
+36th,IZ*ONE,1297605,F,official_izone
+37th,PENTAGON,1273759,M,CUBE_PTG
+38th,iKON,1228417,M,YG_iKONIC
+39th,Kep1er,1129829,F,official_kep1er
+40th,IVE,1060477,F,IVEstarship
+41st,VIXX,1008955,M,RealVIXX
+42nd,LOONA,986960,F,loonatheworld
+43rd,NU'EST,946644,M,NUESTNEWS
+46th,Apink,856511,F,Apink_2011
+47th,SF9,833592,M,SF9official
+48th,NiziU,807623,F,NiziU__official
+49th,X1,801547,M,x1official101
+50th,ONEUS,797677,M,official_ONEUS
+51st,LE SSERAFIM,768989,F,le_sserafim
+52nd,STAYC,694052,F,STAYC_official
+53rd,NMIXX,673858,F,NMIXX_official
+54th,NewJeans,658372,F,NewJeans_ADOR
+55th,INFINITE,619005,M,Official_IFNT
+57th,AB6IX,610489,M,AB6IX
+58th,SISTAR,584428,F,sistarsistar
+59th,CRAVITY,575093,M,CRAVITYstarship
+60th,TEEN TOP,569770,M,TEEN_TOP
+61st,A.C.E,540810,M,official_ACE7
+62nd,EVERGLOW,537168,F,EVERGLOW_twt
+63rd,VICTON,535676,M,VICTON1109
+64th,Wonder Girls,518230,F,WonderGirls
+65th,KARD,505874,MIX,KARD_Official
+66th,Dreamcatcher,497569,F,hf_dreamcatcher
+67th,EXID,483366,F,EXIDofficial
+68th,fromis_9,462694,F,realfromis_9
+69th,Block B,434906,M,blockb_official
+70th,U-KISS,430480,M,ukisskorea
+71st,CIX,418447,M,CIX_Official
+72nd,OH MY GIRL,413025,F,WM_OHMYGIRL
+73rd,WJSN,403040,F,WJSN_Cosmic
+75th,miss A,390853,F,JYPEmissA
+76th,CLC,372311,F,CUBECLC
+77th,GOT the beat,351124,F,GirlsOnTop_SM
+78th,WINNER,349237,M,yg_winnercity
+79th,P1Harmony,348974,M,P1H_official
+80th,Golden Child,342325,M,Hi_Goldenness
+81st,2NE1,337041,F,GlobalBlackjack
+82nd,TVXQ!,335365,M,TVXQ
+83rd,Xdinary Heroes,324032,M,XH_official
+84th,B1A4,322182,M,_B1A4OFFICIAL
+85th,Boyfriend,307625,M,G_BoyFriend
+86th,Lovelyz,303491,F,Official_LVLZ
+87th,MOMOLAND,293489,F,MMLD_Official
+88th,Weeekly,292895,F,_Weeekly
+89th,MCND,292680,M,McndOfficial_
+90th,WEi,292412,M,WEi__Official
+91st,The Rose,291510,M,TheRose_0803
+92nd,Weki Meki,282192,F,WekiMeki
+93rd,Billlie,264920,F,Billlieofficial
+95th,MXM,228592,M,bnmboysofficial
+96th,SECRET NUMBER,225576,F,5ecretNumber
+97th,TEMPEST,225517,M,TPST__official
+98th,TO1,218221,M,TO1_offcl
+99th,Shinhwa,215028,M,ShinhwaCompany
+100th,VIVIZ,213521,F,VIVIZ_official
+101st,Cherry Bullet,211229,F,cherrybullet
+102nd,N.Flying,205723,M,NFlyingofficial
+103rd,ONF,203267,M,WM_ONOFF
+104th,Girl's Day,202816,F,Girls_Day
+105th,VERIVERY,190560,M,by_verivery
+106th,JUST B,187480,M,JUSTB_Official
