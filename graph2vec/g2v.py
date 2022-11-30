@@ -23,13 +23,21 @@ from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from yellowbrick.cluster import SilhouetteVisualizer
 from sklearn.metrics import silhouette_score
 from datetime import datetime
+from soyclustering import SphericalKMeans
+from scipy.sparse import csr_matrix
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.decomposition import PCA
+from sklearn.manifold import MDS
+
 import warnings
 warnings.filterwarnings(action='ignore')
+pd.options.display.float_format = '{:.5f}'.format
 
 def plot_tsne(embedding_vectors, clusters, artist):
     two_dim_vectors = TSNE(n_components=2, 
                            random_state=1, 
-                           perplexity=10).fit_transform(embedding_vectors)
+                           perplexity=20).fit_transform(embedding_vectors)
 
     fig, ax = plt.subplots(figsize=(8,5))
     for i in range(len(embedding_vectors)):
@@ -39,8 +47,32 @@ def plot_tsne(embedding_vectors, clusters, artist):
     sns.scatterplot(x=two_dim_vectors[:,0], y=two_dim_vectors[:,1], hue=clusters, palette='bright')
     plt.show()
     
-def draw_networks(artist, subgraphs):
-    for i in range(len(artist)):
+def plot_pca(embedding_vectors, clusters, artist):
+    two_dim_vectors = PCA(n_components=2, 
+                           random_state=1).fit_transform(embedding_vectors)
+
+    fig, ax = plt.subplots(figsize=(8,5))
+    for i in range(len(embedding_vectors)):
+        x, y, c = two_dim_vectors[i,0], two_dim_vectors[i,1], str(i+1)
+        plt.text(x, y, c)
+
+    sns.scatterplot(x=two_dim_vectors[:,0], y=two_dim_vectors[:,1], hue=clusters, palette='bright')
+    plt.show()
+    
+def plot_mds(embedding_vectors, clusters, artist):
+    two_dim_vectors = MDS(n_components=2, 
+                           random_state=1).fit_transform(embedding_vectors)
+
+    fig, ax = plt.subplots(figsize=(8,5))
+    for i in range(len(embedding_vectors)):
+        x, y, c = two_dim_vectors[i,0], two_dim_vectors[i,1], str(i+1)
+        plt.text(x, y, c)
+
+    sns.scatterplot(x=two_dim_vectors[:,0], y=two_dim_vectors[:,1], hue=clusters, palette='bright')
+    plt.show()
+    
+def draw_networks(artists, subgraphs):
+    for i in range(len(artists)):
         subg = subgraphs[i]
         plt.figure(figsize=(20,12))
         plt.axis('off')
@@ -48,17 +80,14 @@ def draw_networks(artist, subgraphs):
         title_font = {
             'fontsize': 100,
             'fontweight': 'bold'}
-        plt.title(artist[i], fontdict=title_font, loc='left', pad=20)
+        plt.title('{}. {}'.format(i+1, artists[i]), fontdict=title_font, loc='left', pad=20)
         pos = nx.kamada_kawai_layout(subg, scale=2)
         over5 = dict(filter(lambda e: e[1] >= 5, dict(subg.degree).items()))
         nx.draw_networkx_nodes(subg, pos, node_size=500, node_color='#0096FF')
         nx.draw_networkx_nodes(subg, pos, nodelist=list(over5.keys()), node_size=1500, node_color='#0437F2')
         nx.draw_networkx_edges(subg, pos, edge_color='#0437F2')
-        try:
-            plt.savefig('plot/network/{}.png'.format(artist[i]))
-        except:
-            plt.savefig('plot/network/{}.png'.format(artist[i].replace('*', '')))
-        plt.show()
+        filepath_np = ('plot/network/{}.png'.format(artists[i])).replace('*', ' ').replace('!', '')
+        plt.savefig(filepath_np)
 
 def feature_extractor(graphs, gnames, n_neighbor=3, hash_size=16):
     docs = []
@@ -248,12 +277,12 @@ def plot_silhouette(data, param_init='random', param_n_init=10, param_max_iter=3
     plt.tight_layout()
     plt.show()
 
-def get_filtered_followers(most_followed):
+def get_filtered_followers(artists):
     all_ffs = []
-    for i in most_followed.index:
-        name = most_followed['name'][i]
-        filepath = ('data/followers_all/{}.p'.format(name)).replace('*', ' ').replace('!', '')
-        with open(filepath, 'rb') as f:
+    for artist in artists:
+        artist
+        filepath_f = ('data/followers_all/{}.p'.format(artist)).replace('*', ' ').replace('!', '')
+        with open(filepath_f, 'rb') as f:
             followers = pickle.load(f)
           
         filtered_fs = []
@@ -262,16 +291,26 @@ def get_filtered_followers(most_followed):
             if c_date < datetime(2022,5,1) and not follower.verified:
                 filtered_fs.append(follower)
         all_ffs.append(filtered_fs)
+        
     return all_ffs
 
-def get_ex_info():
-    user_info_cols = ['n_custom_profile_of_fans', 'n_followers_of_fans', 'n_friends_of_fans', 'ff_ratio_of_fans','n_tweets_of_fans', 'n_core_fans']
-    most_followed[user_info_cols] = 0
+def get_ex_info(mf):
+    user_info_cols = ['n_custom_profile_of_fans',
+                      'p_custom_profile_of_fans',
+                      'n_followers_of_fans', 
+                      'n_friends_of_fans', 
+                      'ff_ratio_of_fans',
+                      'n_tweets_of_fans', 
+                      'n_core_fans',
+                      'p_core_fans']
     
-    all_filtered_fs = get_filtered_followers(most_followed)
-    for i in most_followed.index:
+    mf[user_info_cols] = 0
+    
+    all_filtered_fs = get_filtered_followers(mf['name'])
+    
+    for i in mf.index:
         followers = all_filtered_fs[i]
-        artist_name = most_followed['name'][i]
+        artist_name = mf['name'][i]
         n = len(followers)
         n_custom_profile, n_followers, n_friends, friends_followers_ratio, n_tweets, n_core = 0, 0, 0, 0, 0, 0
         for follower in followers:
@@ -284,23 +323,21 @@ def get_ex_info():
             if artist_name.lower() in follower.screen_name or \
                 artist_name.lower() in follower.description.lower():
                     n_core += 1
-        most_followed['n_custom_profile_of_fans'][i] = n_custom_profile
-        most_followed['n_followers_of_fans'][i] = n_followers
-        most_followed['n_friends_of_fans'][i] = n_friends
-        most_followed['ff_ratio_of_fans'][i] = friends_followers_ratio
-        most_followed['n_tweets_of_fans'][i] = n_tweets
-        most_followed['n_core_fans'][i] = n_core
-        
-    metrics[user_info_cols] = most_followed[user_info_cols]
+        mf['n_custom_profile_of_fans'][i] = n_custom_profile
+        mf['p_custom_profile_of_fans'][i] = n_custom_profile / len(followers)
+        mf['n_followers_of_fans'][i] = n_followers
+        mf['n_friends_of_fans'][i] = n_friends
+        mf['ff_ratio_of_fans'][i] = friends_followers_ratio
+        mf['n_tweets_of_fans'][i] = n_tweets
+        mf['n_core_fans'][i] = n_core
+        mf['p_core_fans'][i] = n_core / len(followers)
     
-    metrics['n_followers_of_artist'] = most_followed['followers_count']
-    metrics['gender'] = most_followed['gender_en']
+    return mf[['name'] + user_info_cols]
     
 if __name__ == '__main__':
     
     most_followed = pd.read_csv('crawling/top100.csv')
-    most_followed = most_followed[:40]
-    most_followed['gender_en'] = most_followed['gender'].map({'M':0, 'MIX':1, 'F':2})
+    most_followed = most_followed[:70]
 
     artists = most_followed['name'].values.tolist()
     accounts = most_followed['account'].values.tolist()
@@ -308,7 +345,7 @@ if __name__ == '__main__':
     graphs = []
     
     for artist in artists:
-        filepath_n = ('data/network/{}.net'.format(artist)).replace('*', ' ').replace('!', '')
+        filepath_n = ('data/network_v1/{}.net'.format(artist)).replace('*', ' ').replace('!', '')
         
         G = nx.read_pajek(filepath_n)
         G.remove_edges_from(list(nx.selfloop_edges(nx.Graph(G))))
@@ -318,18 +355,17 @@ if __name__ == '__main__':
     draw_networks(artists, graphs)
     
     metrics = network_info(artists, graphs)
-    #metrics = pd.read_csv('metrics_all.csv')
     print('Network metric complete')
     
     sc = MinMaxScaler()
     
     # 현재 베스트
     docs = feature_extractor(graphs, artists, n_neighbor=5, hash_size=8)
-    #doc2vec = Doc2Vec(docs, vector_size=16, window=0, min_count=5, dm=0, workers=4, epochs=10, alpha=0.025, seed=10)
-    doc2vec = Doc2Vec(docs, vector_size=16)
+    #doc2vec = Doc2Vec(docs, vector_size=16, window=0, dm=0, workers=5, alpha=0.025, seed=10)
+    doc2vec = Doc2Vec(docs, vector_size=16, dm=1, workers=10, seed=1)
     doc2vec.build_vocab(docs)
     
-    epochs = 20
+    epochs = 100
     for i in range(epochs):
         doc2vec.train(docs, total_examples=doc2vec.corpus_count, epochs=100)
     
@@ -340,31 +376,52 @@ if __name__ == '__main__':
     plot_elbow(g2v_norm)
     plot_silhouette(g2v_norm)
     
+    spherical_kmeans = SphericalKMeans(n_clusters=3, init='similar_cut')
+    clusters = spherical_kmeans.fit_predict(csr_matrix(g2v_norm))
+    
+    agg_clustering = AgglomerativeClustering(n_clusters=3, affinity='euclidean', linkage='ward')
+    clusters = agg_clustering.fit_predict(g2v_norm)
+    
     kmeans = KMeans(n_clusters=3).fit(g2v_norm)
     clusters = kmeans.labels_
+    
+    clusters += 1
     metrics['cluster'] = clusters
     sns.set_style("white")
     sns.countplot(x='cluster', data=metrics, palette='bright')
     plt.show()
     
     plot_tsne(g2v_norm, clusters, artists)
-    
+    plot_pca(g2v_norm, clusters, artists)
+    plot_mds(g2v_norm, clusters, artists)
+
     posthoc_test('avg_degree', metrics)
     posthoc_test('density', metrics)
-    posthoc_test('centralization(degree)', metrics)
-    posthoc_test('centralization(betweenness)', metrics)
-    posthoc_test('centralization(closeness)', metrics)
+
     posthoc_test('connectivity', metrics)
     posthoc_test('efficiency', metrics)
     posthoc_test('assortativity', metrics)
     posthoc_test('s_metric', metrics)
+    
+    posthoc_test('centralization(degree)', metrics)
+    posthoc_test('centralization(betweenness)', metrics)
+    posthoc_test('centralization(closeness)', metrics)
+
+    
+    '''
+    mf_with_ex = get_ex_info(most_followed)
+    mf_with_ex['gender_en'] = most_followed['gender'].map({'M':0, 'MIX':1, 'F':2})
+    mf_with_ex['n_followers_of_artist'] = most_followed['followers_count']
+    metrics = metrics.merge(mf_with_ex, left_on='artist' ,right_on='name')
+    
     posthoc_test('n_followers_of_artist', metrics)
     posthoc_test('n_custom_profile_of_fans', metrics)
+    posthoc_test('p_custom_profile_of_fans', metrics)
     posthoc_test('n_followers_of_fans', metrics)
     posthoc_test('n_friends_of_fans', metrics)
     posthoc_test('ff_ratio_of_fans', metrics)
     posthoc_test('n_tweets_of_fans', metrics)
     posthoc_test('n_core_fans', metrics)
-    posthoc_test('gender', metrics)
-    
-    
+    posthoc_test('p_core_fans', metrics)
+    posthoc_test('gender_en', metrics)
+    '''
