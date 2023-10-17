@@ -6,10 +6,11 @@ __pycache__/
 .pylint.d/
 config.py
 *.zip
-data/
-network/
-plot/
-*.csv
+fandom2vec_v1_v4/data/
+fandom2vec_v1_v4/network/
+fandom2vec_v1_v4/plot/
+fandom2vec_v1_v4/*.csv
+
 
 # C extensions
 *.so
