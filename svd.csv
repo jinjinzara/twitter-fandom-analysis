@@ -1,0 +1,17 @@
+﻿version,description
+1.x.x,doc2vec
+2.x.x,데이터 추가. doc2vec + categorical variable 추가
+3.0.0,"categorical variable 제외. doc2vec + node2vec embedding. n2v 0.6, d2v 0.4로 weighted sum."
+3.1.0,"doc2vec + node2vec embedding. normalization 수행. n2v 0.7, d2v 0.3으로 weighted sum."
+3.0.1,"doc2vec + node2vec embedding. n2v 0.6, d2v 0.4로 weighted sum. 팬덤 5개 이하에 속해 있는 user만 embedding(remove big fan)"
+3.1.1,"doc2vec + node2vec embedding. normalization 수행. n2v 0.7, d2v 0.3으로 weighted sum. remove big fan."
+3.2.0,doc2vec + node2vec + tf-idf concatenate.
+3.2.1,doc2vec + node2vec + tf-idf concatenate. normalization.
+4.x.x,graph2vec. top 30 K-pop fandom.
+5.0.0,network analysis by activity period. top 160 K-pop fandom
+5.1.0,top 160 수집하려고 했으나 실패. 데이터 재수집. 활동 중단 K-pop 아티스트 등 제외해 top 100에 대해 분석 진행.
+5.2.0,"SM,YG 소속 아티스트에 대해 source user 2배로 늘려 데이터 재수집."
+6.0.0,graph2vec ver2. top 163에 대해 네트워크 수집. source user 100 → 500 으로 증가.
+6.1.0,데이터를 최근 트윗 n개가 아닌 2022.05.01 - 2022.11.01에 업로드된 모든 트윗으로 변경. top 50 k-pop 아티스트.
+6.2.0,top 70 k-pop 아티스트. 팬덤 관련 지표 삭제.
+6.3.0,top 100 k-pop 아티스트에 대해 분석.
