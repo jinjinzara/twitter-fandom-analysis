@@ -56,3 +56,5 @@ min_count: 5. 최소 빈도 수. 해당 수보다 적게 나온 토큰은 학습
 wl_iterations: 5. subgraph에서 합칠 이웃 노드의 수. 네트워크가 클수록 큰 값으로 설정.
 learning rate: 0.015. 학습률.
 ```
+# Paper
+https://www.sciencedirect.com/science/article/abs/pii/S1875952124001356
